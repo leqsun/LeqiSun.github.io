@@ -7,18 +7,18 @@
   <title>使用spring session时，关于session的共享设置 | Coding Sun Coding Moon</title>
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
   <meta name="description" content="前些天，针对当前的项目，开了个子项目，准备用个二级域名，要求账号用一套，然后就牵扯到session共享的问题，开始没考虑到spring session，只考虑到tomcat层面的，google了一下后，说配置一下context。
-具体是在项目中webapp添加文件夹META-INF，然后添加个文件context.xml，内容为12&amp;lt;?xml version=&amp;quot;1.0&amp;quot; e">
+具体是在项目中webapp添加文件夹META-INF，然后添加个文件context.xml，内容为12&amp;lt;?xml version=&quot;1.0&quot; encoding=&quot;U">
 <meta property="og:type" content="article">
 <meta property="og:title" content="使用spring session时，关于session的共享设置">
 <meta property="og:url" content="http://lequsun.com/spring/java_spring_session/index.html">
 <meta property="og:site_name" content="Coding Sun Coding Moon">
 <meta property="og:description" content="前些天，针对当前的项目，开了个子项目，准备用个二级域名，要求账号用一套，然后就牵扯到session共享的问题，开始没考虑到spring session，只考虑到tomcat层面的，google了一下后，说配置一下context。
-具体是在项目中webapp添加文件夹META-INF，然后添加个文件context.xml，内容为12&amp;lt;?xml version=&amp;quot;1.0&amp;quot; e">
-<meta property="og:updated_time" content="2016-06-05T15:59:16.852Z">
+具体是在项目中webapp添加文件夹META-INF，然后添加个文件context.xml，内容为12&amp;lt;?xml version=&quot;1.0&quot; encoding=&quot;U">
+<meta property="og:updated_time" content="2016-06-19T04:05:04.795Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="使用spring session时，关于session的共享设置">
 <meta name="twitter:description" content="前些天，针对当前的项目，开了个子项目，准备用个二级域名，要求账号用一套，然后就牵扯到session共享的问题，开始没考虑到spring session，只考虑到tomcat层面的，google了一下后，说配置一下context。
-具体是在项目中webapp添加文件夹META-INF，然后添加个文件context.xml，内容为12&amp;lt;?xml version=&amp;quot;1.0&amp;quot; e">
+具体是在项目中webapp添加文件夹META-INF，然后添加个文件context.xml，内容为12&amp;lt;?xml version=&quot;1.0&quot; encoding=&quot;U">
   
     <link rel="alternative" href="/atom.xml" title="Coding Sun Coding Moon" type="application/atom+xml">
   
@@ -221,13 +221,13 @@
     <div class="article-entry" itemprop="articleBody">
       
         <p>前些天，针对当前的项目，开了个子项目，准备用个二级域名，要求账号用一套，然后就牵扯到session共享的问题，开始没考虑到spring session，只考虑到tomcat层面的，google了一下后，说配置一下context。</p>
-<p>具体是<br>在项目中webapp添加文件夹META-INF，然后添加个文件context.xml，内容为<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">&lt;?xml version=&quot;1.0&quot; encoding=&quot;UTF-8&quot;?&gt;</span><br><span class="line">&lt;Context useHttpOnly=&quot;true&quot; sessionCookiePath=&quot;/&quot; sessionCookieDomain=&quot;.XXXX.com&quot; /&gt;</span><br></pre></td></tr></table></figure></p>
+<p>具体是<br>在项目中webapp添加文件夹META-INF，然后添加个文件context.xml，内容为<br><figure class="highlight xml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">&lt;?xml version="1.0" encoding="UTF-8"?&gt;</span><br><span class="line"><span class="tag">&lt;<span class="name">Context</span> <span class="attr">useHttpOnly</span>=<span class="string">"true"</span> <span class="attr">sessionCookiePath</span>=<span class="string">"/"</span> <span class="attr">sessionCookieDomain</span>=<span class="string">".XXXX.com"</span> /&gt;</span></span><br></pre></td></tr></table></figure></p>
 <p>但是启动项目后，发现两个地址下的SESSIONID不一样，domain也不一样，然后用户登录信息就不会公用了，后来不管怎么配置都不会生效，让人很苦恼！</p>
 <p>后来了解到我们的项目用的是spring session，所有的用户session都存在redis中了，所以才想到，session的生成逻辑应该是已经被spring session托管了。而后经过大牛的指点，并且看了下spring session的源码，还有spring session中关于session的文档，<a href="http://docs.spring.io/spring-session/docs/current/reference/html5/guides/custom-cookie.html" target="_blank" rel="external">《Spring Session - Custom Cookie》</a>，spring session在创建session时，是没有设置domain的，那么就会用默认的域名设置。</p>
 <p>spring session的开发人员也考虑到了这个，所以在DefaultCookieSerializer（该类是用来处理session的）中设置了一些私有变量和set方法，有domainName和domainNamePattern（正则表达式）等等，domainName是用来设置session的domain，domainNamePattern是用来根据request里的serverName来匹配出对应的domainName。</p>
 <p>因为有set方法，我们可以采用注入的方式，在spring session的配置文件中，将domainName或domainNamePattern注入进去</p>
-<p>注入domainName方式，可以直接设定对应的顶级域名，比如abc.com<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">&lt;bean class=&quot;org.springframework.session.web.http.DefaultCookieSerializer&quot;&gt;</span><br><span class="line">    &lt;property name=&quot;domainName&quot; value=&quot;abc.com&quot;/&gt;</span><br><span class="line">&lt;/bean&gt;</span><br></pre></td></tr></table></figure></p>
-<p>注入domainNamePattern方式，可以设定一串正则表达式，用来获取到顶级域名，这里注进去的value值为spring session官方提供的<strong>^.+?\\.(\\w+\\.[a-z]+)$</strong>，不过我测试时，发现获取不到顶级域名，这个待继续研究，目前项目中可以采取上一种方式直接写死domainName<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">&lt;bean class=&quot;org.springframework.session.web.http.DefaultCookieSerializer&quot;&gt;</span><br><span class="line">    &lt;property name=&quot;domainNamePattern&quot; value=&quot;^.+?\\.(\\w+\\.[a-z]+)$&quot;/&gt;</span><br><span class="line">&lt;/bean&gt;</span><br></pre></td></tr></table></figure></p>
+<p>注入domainName方式，可以直接设定对应的顶级域名，比如abc.com<br><figure class="highlight xml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="tag">&lt;<span class="name">bean</span> <span class="attr">class</span>=<span class="string">"org.springframework.session.web.http.DefaultCookieSerializer"</span>&gt;</span></span><br><span class="line">    <span class="tag">&lt;<span class="name">property</span> <span class="attr">name</span>=<span class="string">"domainName"</span> <span class="attr">value</span>=<span class="string">"abc.com"</span>/&gt;</span></span><br><span class="line"><span class="tag">&lt;/<span class="name">bean</span>&gt;</span></span><br></pre></td></tr></table></figure></p>
+<p>注入domainNamePattern方式，可以设定一串正则表达式，用来获取到顶级域名，这里注进去的value值为spring session官方提供的<strong>^.+?\\.(\\w+\\.[a-z]+)$</strong>，不过我测试时，发现获取不到顶级域名，这个待继续研究，目前项目中可以采取上一种方式直接写死domainName<br><figure class="highlight xml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="tag">&lt;<span class="name">bean</span> <span class="attr">class</span>=<span class="string">"org.springframework.session.web.http.DefaultCookieSerializer"</span>&gt;</span></span><br><span class="line">    <span class="tag">&lt;<span class="name">property</span> <span class="attr">name</span>=<span class="string">"domainNamePattern"</span> <span class="attr">value</span>=<span class="string">"^.+?\\.(\\w+\\.[a-z]+)$"</span>/&gt;</span></span><br><span class="line"><span class="tag">&lt;/<span class="name">bean</span>&gt;</span></span><br></pre></td></tr></table></figure></p>
 <p>这样，最终就解决了二级域名下的session共享问题，之前的关于tomcat的context配置就可以去掉了，因为这里不需要的了</p>
 <p>That’s All，也辛辛苦苦写了不少，希望能帮助到大家，如果有问题，还望大家指出，谢谢！</p>
 
